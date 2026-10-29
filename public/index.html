@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>Remote Service Messages</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+*, *::before, *::after{
+  box-sizing:border-box;
+}
+:root{
+  --bg:#0B1220;
+  --text:rgba(255,255,255,0.96);
+  --muted:rgba(255,255,255,0.60);
+  --accent:#39AA40;
+  --hair:rgba(255,255,255,0.10);
+  --glow:rgba(57,170,64,0.18);
+  --card:rgba(255,255,255,0.04);
+  --cardBorder:rgba(255,255,255,0.10);
+}
+body.night{
+  --bg:#05070B;
+  --text:rgba(255,255,255,0.90);
+  --muted:rgba(255,255,255,0.45);
+  --accent:#2F8E35;
+  --hair:rgba(255,255,255,0.06);
+  --glow:rgba(57,170,64,0.10);
+  --card:rgba(255,255,255,0.03);
+  --cardBorder:rgba(255,255,255,0.08);
+}
+html,body{
+  height:100%;
+  margin:0;
+  background:var(--bg);
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  color:var(--text);
+  overflow:hidden;
+  transition:background .8s ease;
+}
+.bg{
+  position:fixed;
+  inset:0;
+  background:
+    radial-gradient(900px 600px at 70% 20%, var(--glow), transparent 55%),
+    linear-gradient(var(--hair) 1px, transparent 1px),
+    linear-gradient(90deg, var(--hair) 1px, transparent 1px);
+  background-size: auto, 90px 90px, 90px 90px;
+  opacity:0.4;
+}
+
+/* layout */
+.container{
+  position:relative;
+  height:100%;
+  display:grid;
+  grid-template-rows:auto auto 1fr auto; /* header + main stack (P1/P2/P3, natural height) + phrase (centers in remaining space) + footer */
+  padding:24px 24px 12px;
+  row-gap:10px;
+  overflow:hidden;
+}
+
+/* header */
+.header{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  text-transform:uppercase;
+  letter-spacing:0.18em;
+  font-size:12px;
+  color:var(--muted);
+}
+.dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 14px var(--glow);
+}
+.line{
+  flex:1;height:1px;
+  background:linear-gradient(90deg,var(--accent),transparent);
+  opacity:.85;
+}
+
+/* motivational phrase (now a footer-area strip, not the hero) */
+.center{
+  display:grid;
+  place-items:center;
+  text-align:center;
+  padding:4px 10px;
+}
+#phraseWrap{
+  max-width:1100px;
+}
+#phrase{
+  font-weight:600;
+  letter-spacing:-0.02em;
+  line-height:1.15;
+  font-size:clamp(20px,2.3vw,34px);
+  transition:opacity .7s ease, transform .7s ease, filter .7s ease;
+}
+#attrib{
+  margin-top:8px;
+  font-size:13px;
+  color:rgba(255,255,255,0.55);
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  transition:opacity .7s ease, transform .7s ease, filter .7s ease;
+}
+#attrib .dash{
+  opacity:0.45;
+  margin-right:6px;
+}
+
+
+/* always-visible SLA priority visual */
+.priorityVisual{
+  max-width:1700px;
+  width:100%;
+  margin:0 auto;
+  border:1px solid var(--cardBorder);
+  background:linear-gradient(90deg, rgba(255,255,255,0.065), rgba(57,170,64,0.08));
+  border-radius:22px;
+  padding:14px 18px 16px;
+  box-shadow:0 14px 36px rgba(0,0,0,0.16);
+  height:56vh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.priorityHeader{
+  display:flex;
+  justify-content:space-between;
+  gap:18px;
+  align-items:flex-end;
+  margin-bottom:10px;
+  flex:0 0 auto;
+}
+.priorityEyebrow{
+  text-transform:uppercase;
+  letter-spacing:0.16em;
+  color:var(--muted);
+  font-size:10px;
+  font-weight:700;
+}
+.priorityTitle{
+  margin-top:3px;
+  font-size:18px;
+  font-weight:700;
+  letter-spacing:-0.02em;
+}
+.prioritySubtitle{
+  margin-top:6px;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.35;
+  max-width:760px;
+}
+.prio3Note{
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+  margin-top:10px;
+  padding:8px 12px;
+  border-radius:12px;
+  border:1px dashed rgba(148,163,184,0.45);
+  background:rgba(148,163,184,0.08);
+  font-size:11px;
+  color:var(--muted);
+  flex:0 0 auto;
+}
+.prio3Note b{
+  color:rgba(226,232,240,0.92);
+  font-size:12px;
+  white-space:nowrap;
+}
+.priorityTimeline{
+  position:relative;
+  height:108px;
+  flex:0 0 auto;
+}
+.priorityBase,
+.prioritySegment{
+  position:absolute;
+  top:38px;
+  height:8px;
+}
+.priorityBase{
+  left:0; right:0;
+  border-radius:999px;
+  background:rgba(255,255,255,0.12);
+}
+.prioritySegment.p2{left:0;width:58%;background:rgba(251,146,60,0.95);border-radius:999px 0 0 999px;}
+.prioritySegment.p1{left:58%;width:24%;background:rgba(57,170,64,0.98);}
+.prioritySegment.early{left:82%;right:0;background:rgba(255,255,255,0.22);border-radius:0 999px 999px 0;}
+.priorityNowLine{
+  position:absolute;
+  left:58%;
+  top:4px;
+  bottom:8px;
+  width:3px;
+  border-radius:999px;
+  background:#5DA8FF;
+  box-shadow:0 0 16px rgba(93,168,255,0.55);
+}
+.priorityNowBadge{
+  position:absolute;
+  left:58%;
+  top:0;
+  transform:translate(-50%,-35%);
+  background:#2563eb;
+  color:#fff;
+  border-radius:999px;
+  padding:5px 11px;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:0.12em;
+}
+.priorityLabel{
+  position:absolute;
+  top:18px;
+  transform:translateX(-50%);
+  color:rgba(255,255,255,0.56);
+  font-size:10px;
+  font-weight:700;
+  white-space:nowrap;
+}
+.priorityLabel.p2{left:29%;}
+.priorityLabel.p1{left:70%;}
+.priorityLabel.early{left:91%;}
+.priorityZone{
+  position:absolute;
+  top:58px;
+  box-sizing:border-box;
+  padding:9px 10px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,0.10);
+  background:rgba(255,255,255,0.045);
+  min-height:44px;
+}
+.priorityZone b{
+  display:block;
+  font-size:12px;
+  margin-bottom:2px;
+}
+.priorityZone span{
+  display:block;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.25;
+}
+.priorityZone.p2{left:0;width:54%;border-color:rgba(251,146,60,0.35);}
+.priorityZone.p1{left:60%;width:20%;border-color:rgba(57,170,64,0.42);background:rgba(57,170,64,0.12);}
+.priorityZone.early{right:0;width:16%;}
+@media (max-height: 850px){
+  .priorityVisual{padding:10px 14px 12px;}
+  .priorityHeader{margin-bottom:6px;}
+  .priorityTitle{font-size:15px;}
+  .prioritySubtitle{font-size:11px;}
+  .priorityTimeline{height:88px;}
+  .priorityZone{top:52px;padding:7px 8px;min-height:36px;}
+  .priorityZone span{display:none;}
+}
+@media (max-width: 900px){
+  .priorityHeader{align-items:flex-start;flex-direction:column;}
+  .priorityTimeline{min-width:780px;}
+}
+
+/* stack holding P1 visual + P2/P3 summary panels, fills the flexible row */
+.mainStack{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  overflow:hidden;
+}
+
+/* Light color grouping: written cases (indigo) vs phone calls (teal) —
+   a colored "zone" around each group, not just a text label. */
+.casesGroup{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:8px;
+  border-radius:26px;
+  background:rgba(99,102,241,0.05);
+  border:1px solid rgba(99,102,241,0.16);
+  min-height:0;
+}
+.callsGroup{
+  padding:8px;
+  border-radius:22px;
+  background:rgba(45,212,191,0.05);
+  border:1px solid rgba(45,212,191,0.16);
+}
+
+/* P2 + P3 side by side */
+.p23Row{
+  display:flex;
+  gap:10px;
+  max-width:1700px;
+  width:100%;
+  margin:0 auto;
+  align-items:stretch;
+}
+.p23Row .miniPanel{
+  margin:0;
+  max-width:none;
+}
+.p23Row .p2Panel{ flex:1; }
+.p23Row .p3Panel{ flex:1; display:flex; flex-direction:column; }
+
+/* big single-number stat (used standalone, e.g. Connect panel doesn't use this anymore but kept for any future single-stat panel) */
+.statBig{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  padding:6px 0 2px;
+}
+.statNumber{
+  font-size:44px;
+  font-weight:800;
+  line-height:1;
+  font-variant-numeric:tabular-nums;
+  color:#fff;
+}
+.statLabel{
+  font-size:12px;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:0.10em;
+}
+
+/* compact summary card for P2 / P3 */
+.miniPanel{
+  max-width:1700px;
+  width:100%;
+  margin:0 auto;
+  border:1px solid var(--cardBorder);
+  background:linear-gradient(90deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  border-radius:18px;
+  padding:12px 16px;
+  height:12vh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.connectPanel{
+  height:11vh;
+}
+.connectStats{
+  display:flex;
+  flex:1;
+  min-height:0;
+}
+.connectStat{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  border-left:1px solid rgba(255,255,255,0.10);
+}
+.connectStat:first-child{
+  border-left:none;
+}
+
+/* Alert state: scoped to just the "oldest wait" cell — other stats stay
+   visible and untouched. Border flashes red; text goes bold red. */
+.connectStat.alertingCell{
+  border-radius:12px;
+  animation: connectAlertFlash 1.1s ease-in-out infinite;
+}
+@keyframes connectAlertFlash{
+  0%, 100% { box-shadow: inset 0 0 0 2px rgba(239,83,80,0.15); }
+  50%      { box-shadow: inset 0 0 0 2px rgba(239,83,80,0.85); }
+}
+.connectStat.alertingCell .statNumber{
+  color:#ff5c5c;
+}
+.connectStat.alertingCell .qName{
+  font-size:13px;
+  font-weight:800;
+  color:#ff5c5c;
+  letter-spacing:0.03em;
+  white-space:nowrap;
+}
+
+.splitBody{
+  display:flex;
+  flex:1;
+  min-height:0;
+  gap:16px;
+  align-items:stretch;
+}
+.splitBody .tierChips{
+  margin-top:0;
+}
+.sidebarStat{
+  flex:0 0 150px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  border-left:1px solid rgba(255,255,255,0.10);
+  padding-left:16px;
+}
+
+/* SLA tier breakdown as chips (no time buckets — P2/P3 are already-missed backlog) */
+.tierChips{
+  display:flex;
+  flex-wrap:wrap;
+  align-content:center;
+  gap:8px;
+  margin-top:8px;
+  flex:1;
+  min-height:0;
+  overflow:hidden;
+}
+.tierChip{
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+  padding:8px 14px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,0.10);
+  background:rgba(255,255,255,0.03);
+  font-size:13px;
+  font-weight:700;
+}
+.tierChip b{
+  font-size:20px;
+  color:var(--text);
+  font-variant-numeric:tabular-nums;
+}
+
+/* Richer tier card for P2: name + count + oldest case date */
+.tierCard{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  padding:8px 16px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.10);
+  background:rgba(255,255,255,0.03);
+  min-width:110px;
+}
+.tierCardName{
+  font-size:12px;
+  font-weight:800;
+}
+.tierCardCount{
+  font-size:22px;
+  font-weight:800;
+  color:var(--text);
+  font-variant-numeric:tabular-nums;
+  line-height:1.1;
+}
+.tierCardOldest{
+  font-size:13px;
+  font-weight:700;
+  margin-top:2px;
+}
+
+.p1Panel{
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px solid rgba(255,255,255,0.08);
+  flex:1;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+}
+.p1PanelHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:8px;
+  flex:0 0 auto;
+}
+.p1PanelTitle{
+  text-transform:uppercase;
+  letter-spacing:0.14em;
+  font-size:11px;
+  font-weight:700;
+  color:var(--muted);
+}
+.p1PanelMeta{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.p1PanelCount{
+  font-size:12px;
+  font-weight:800;
+  color:var(--accent);
+  background:rgba(57,170,64,0.14);
+  border:1px solid rgba(57,170,64,0.35);
+  border-radius:999px;
+  padding:3px 10px;
+}
+.cdCell.expiringAlert{
+  animation:p1ExpiryCellFlash 1.1s ease-in-out infinite;
+}
+@keyframes p1ExpiryCellFlash{
+  0%, 100% { box-shadow: inset 0 0 0 2px rgba(239,83,80,0.15); }
+  50%      { box-shadow: inset 0 0 0 2px rgba(239,83,80,0.85); }
+}
+.p1PanelUpdated{
+  font-size:10px;
+  color:rgba(255,255,255,0.35);
+  text-transform:uppercase;
+  letter-spacing:0.10em;
+}
+.p1List{
+  flex:1;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+/* SLA countdown grid: tiers (rows) x time-to-breach buckets (columns) */
+.countdownGrid{
+  display:grid;
+  grid-template-columns: 92px repeat(10, 1fr);
+  grid-auto-rows:1fr;
+  gap:5px;
+  height:100%;
+}
+.cdHeadCell{
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:0.02em;
+  text-transform:uppercase;
+  color:var(--muted);
+  text-align:center;
+  padding:4px 1px 8px;
+}
+.cdHeadCell.tierHead{ text-align:left; padding-left:2px; }
+.cdTierLabel{
+  display:flex;
+  align-items:center;
+  font-size:13px;
+  font-weight:800;
+  padding:0 8px;
+  border-radius:10px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.06);
+}
+.cdCell{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  border-radius:10px;
+  padding:6px 2px;
+  min-height:0;
+  border:1px solid rgba(255,255,255,0.06);
+  background:rgba(255,255,255,0.025);
+}
+.cdCell .n{
+  font-size:18px;
+  font-weight:800;
+  line-height:1;
+  font-variant-numeric:tabular-nums;
+  color:rgba(255,255,255,0.28);
+}
+.cdCell.hot .n{ color:#fff; }
+/* The Total row is always the last 11 children (label + 10 cells) */
+.countdownGrid > *:nth-last-child(-n+11){ font-weight:800; }
+.countdownGrid > *:nth-last-child(-n+11).cdTierLabel{ background:rgba(255,255,255,0.06); }
+.countdownGrid > *:nth-last-child(-n+11).cdCell .n{ font-size:18px; }
+.p1Empty{
+  color:var(--muted);
+  font-size:12px;
+  padding:8px 4px;
+}
+
+/* footer */
+.footer{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:12px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,0.45);
+}
+
+/* animations */
+.fade-out{opacity:0; transform:translateY(12px); filter:blur(2px);}
+.fade-in{opacity:1; transform:none; filter:none;}
+</style>
+</head>
+
+<body>
+<div class="bg"></div>
+
+<div class="container">
+
+  <div class="header">
+    <span class="dot"></span>
+    <span>Remote Service</span>
+    <span class="line"></span>
+  </div>
+
+  <div class="mainStack">
+
+  <div class="casesGroup" aria-label="Written cases">
+
+  <div class="priorityVisual" aria-label="SLA priority model">
+    <div class="priorityHeader">
+      <div>
+        <div class="priorityEyebrow">Written Cases · SLA Focus Model</div>
+        <div class="priorityTitle">Work close to the deadline — not too early, not too late</div>
+        <div class="prioritySubtitle">Recover past misses first, then focus on what's about to breach. Don't start work that isn't due yet.</div>
+      </div>
+    </div>
+
+    <div class="priorityTimeline">
+      <div class="priorityBase"></div>
+      <div class="prioritySegment p2"></div>
+      <div class="prioritySegment p1"></div>
+      <div class="prioritySegment early"></div>
+      <div class="priorityNowLine"></div>
+      <div class="priorityNowBadge">NOW</div>
+
+      <div class="priorityLabel p2">Past</div>
+      <div class="priorityLabel p1">Next X hours</div>
+      <div class="priorityLabel early">Future</div>
+
+      <div class="priorityZone p2"><b>Prio 2 · Recovery</b><span>Tackle past misses before backlog grows.</span></div>
+      <div class="priorityZone p1"><b>Prio 1 · Focus</b><span>Do not let it expire.</span></div>
+      <div class="priorityZone early"><b>Too early</b><span>Do not work yet.</span></div>
+    </div>
+
+    <div class="prio3Note">
+      <b>Prio 3 · Backlog</b>
+      <span>Cases with no SLA / no deadline at all — outside the time-based flow above. Clean up separately and constantly.</span>
+    </div>
+
+    <div class="p1Panel">
+      <div class="p1PanelHeader">
+        <span class="p1PanelTitle">Prio 1 - Time-to-breach, per SLA tier</span>
+        <div class="p1PanelMeta">
+          <span class="p1PanelUpdated" id="p1Updated"></span>
+          <span class="p1PanelCount" id="p1Count">—</span>
+        </div>
+      </div>
+      <div class="p1List" id="p1List"></div>
+    </div>
+  </div>
+
+  <div class="p23Row">
+
+    <div class="miniPanel p2Panel" aria-label="Report P2 summary">
+      <div class="p1PanelHeader">
+        <span class="p1PanelTitle">Prio 2 - Recovery (past due)</span>
+        <span class="p1PanelUpdated" id="p2Updated"></span>
+      </div>
+      <div class="splitBody">
+        <div class="tierChips" id="p2Chips"></div>
+        <div class="sidebarStat">
+          <div class="statNumber" id="p2Total">—</div>
+          <div class="statLabel">total past due</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="miniPanel p3Panel" aria-label="Report P3 summary">
+      <div class="p1PanelHeader">
+        <span class="p1PanelTitle">Prio 3 - Backlog (no SLA / no deadline)</span>
+        <span class="p1PanelUpdated" id="p3Updated"></span>
+      </div>
+      <div class="splitBody">
+        <div class="tierChips" id="p3Stats"></div>
+        <div class="sidebarStat">
+          <div class="statNumber" id="p3Total">—</div>
+          <div class="statLabel">total cases</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  </div>
+
+  <div class="callsGroup" aria-label="Phone calls">
+
+  <div class="miniPanel connectPanel" id="connectPanelBox" aria-label="AWS Connect live queue status">
+    <div class="p1PanelHeader">
+      <span class="p1PanelTitle" id="connectTitle">Live Queues - AWS Connect · Phone Calls</span>
+      <span class="p1PanelUpdated" id="connectUpdated"></span>
+    </div>
+    <div class="connectStats" id="connectStats">
+      <div class="connectStat">
+        <div class="statNumber" id="connAvailable">—</div>
+        <div class="statLabel">agents available</div>
+      </div>
+      <div class="connectStat">
+        <div class="statNumber" id="connOnContact">—</div>
+        <div class="statLabel">on contact</div>
+      </div>
+      <div class="connectStat">
+        <div class="statNumber" id="connInQueue">—</div>
+        <div class="statLabel">in queue</div>
+      </div>
+      <div class="connectStat" id="connOldestCell">
+        <div class="statNumber" id="connOldest">—</div>
+        <div class="statLabel" id="connOldestLabel">oldest wait</div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+
+  </div>
+
+  <div class="center">
+    <div id="phraseWrap">
+      <div id="phrase" class="fade-in"></div>
+      <div id="attrib" class="fade-in"><span class="dash">—</span><span id="attribName">Placeholder Name</span></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span id="counter"></span>
+    <span>Charger must always work</span>
+  </div>
+
+</div>
+
+<script>
+/* ---------------------------
+   CONFIG
+----------------------------*/
+const DAY_START = 7;
+const NIGHT_START = 19;
+
+const PHRASE_INTERVAL = 15000;   // rotate motto phrases
+
+/* ---------------------------
+   PHRASES + ATTRIBUTION
+   Put placeholder names now; you can edit later.
+----------------------------*/
+const phraseCards = [
+  { text: "Every charge is someone’s journey.",                          by: "Luca" },
+  { text: "When chargers work, people move.",                            by: "Gianmarco" },
+  { text: "We keep the world moving, one charge at a time.",             by: "Gianluca" },
+  { text: "Behind every working charger, there’s a team who cares.",     by: "Monika" },
+  { text: "We don’t fix chargers. We help people continue their day.",   by: "Giannina" },
+  { text: "Problems don’t travel alone. We go with them.",               by: "Niko" },
+  { text: "Remote doesn’t mean distant.",                                by: "Giulia" },
+  { text: "Our success is measured in uninterrupted journeys.",          by: "Edoardo" },
+  { text: "Fast support. Real impact.",                                  by: "Albana" },
+  { text: "Forza Milan!",                         by: "Ogert" },
+  { text: "Service is part of the product.",                             by: "Silvia" },
+  { text: "We power confidence on the road.",                            by: "Andrea" },
+  { text: "Always on. Always for the customer.",                         by: "Mirjana" },
+  { text: "Working chargers. Worry-free journeys.",                       by: "Michele" },
+  { text: "Chargers that work. Support that cares.",                     by: "Danilo" }
+];
+
+/* ---------------------------
+   DAY / NIGHT MODE
+----------------------------*/
+function applyDayNight(){
+  const h = new Date().getHours();
+  const isNight = (h >= NIGHT_START || h < DAY_START);
+  document.body.classList.toggle("night", isNight);
+}
+applyDayNight();
+setInterval(applyDayNight, 60 * 1000);
+
+/* ---------------------------
+   PHRASE ROTATION (cards)
+----------------------------*/
+const phraseEl = document.getElementById("phrase");
+const attribEl = document.getElementById("attrib");
+const attribNameEl = document.getElementById("attribName");
+const counterEl = document.getElementById("counter");
+
+let cardQueue = [];
+let shown = 0;
+
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function refillCardQueue(){
+  cardQueue = shuffle([...phraseCards]);
+  // avoid immediate repeat
+  if (phraseEl.textContent && cardQueue[0]?.text === phraseEl.textContent) {
+    cardQueue.push(cardQueue.shift());
+  }
+}
+function nextCard(){
+  if(!cardQueue.length) refillCardQueue();
+
+  phraseEl.classList.add("fade-out");
+  attribEl.classList.add("fade-out");
+
+  setTimeout(()=>{
+    const card = cardQueue.shift();
+
+    phraseEl.textContent = card.text;
+    attribNameEl.textContent = card.by;
+
+    shown++;
+    counterEl.textContent = String(shown).padStart(2,"0") + " / " + phraseCards.length;
+
+    phraseEl.classList.remove("fade-out");
+    attribEl.classList.remove("fade-out");
+    phraseEl.classList.add("fade-in");
+    attribEl.classList.add("fade-in");
+  }, 350);
+}
+refillCardQueue();
+nextCard();
+setInterval(nextCard, PHRASE_INTERVAL);
+
+/* ---------------------------
+   UTILITIES
+----------------------------*/
+function escapeHTML(s){
+  return s.replace(/[&<>"']/g, (c) => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[c]));
+}
+
+/* ---------------------------
+   REPORT P1 — LIVE SLA CASES
+   The browser no longer talks to nvr.alpitronic.it directly (that failed
+   with ERR_CONNECTION_RESET — a network-level restriction, not a CORS
+   issue). Instead it calls the small backend relay server, same-origin,
+   which holds the OAuth credentials and does the real API call.
+   See relay-server/README.md for how to run that server.
+----------------------------*/
+// The SSE channel normally triggers synchronized report refreshes. This
+// single fallback poll protects the dashboard if the SSE connection drops.
+const REPORT_REFRESH_MS = 60 * 1000;
+
+// Time-to-breach buckets: hourly for the next 8 hours, then two wider bands.
+// Each bucket is exclusive of its lower edge (except the first) and inclusive of its upper edge,
+// so a case is counted in exactly one bucket — no double counting across columns.
+const CD_BUCKET_EDGES = [0, 60, 120, 180, 240, 300, 360, 420, 480, 1440, 4320]; // minutes
+const CD_BUCKETS = CD_BUCKET_EDGES.slice(0, -1).map((lo, i) => {
+  const hi = CD_BUCKET_EDGES[i + 1];
+  return { lo, hi, label: `${lo / 60}–${hi / 60}h` };
+});
+
+// SLA tiers, ordered fastest → slowest (matches the numeric prefix Salesforce uses internally)
+const CD_TIERS = [
+  { key:"diamond",  label:"Diamond",  match:/diamond/i  },
+  { key:"platinum", label:"Platinum", match:/platinum/i },
+  { key:"gold",      label:"Gold",     match:/gold/i     },
+  { key:"silver",    label:"Silver",   match:/silver/i   },
+  { key:"bronze",    label:"Bronze",   match:/bronze/i   },
+  { key:"standard",  label:"Standard", match:/standard/i }
+];
+
+// Shared priority-color scale used everywhere: 0 = red (highest priority), 200 = blue (lowest).
+// Used for both dimensions of priority: higher package tier = higher priority, and less time
+// remaining = higher priority — same red-to-blue language for both.
+function priorityHue(index, count){
+  if (count <= 1) return 0;
+  return Math.round((index / (count - 1)) * 200);
+}
+function tierTextStyle(tierIndex, tierCount){
+  const hue = priorityHue(tierIndex, tierCount);
+  return `color:hsl(${hue},80%,68%);`;
+}
+
+// Status color for a raw count against green/red thresholds (independent of the
+// tier/bucket priority scale above). green at or below `safe`, scaling to red at
+// or beyond `danger`, linear in between.
+function statusHue(count, safe, danger){
+  const GREEN = 130, RED = 0;
+  if (count <= safe) return GREEN;
+  if (count >= danger) return RED;
+  const t = (count - safe) / (danger - safe);
+  return Math.round(GREEN - t * (GREEN - RED));
+}
+function statusStyle(count, safe, danger, { bg = true } = {}){
+  const hue = statusHue(count, safe, danger);
+  const textStyle = `color:hsl(${hue},80%,62%);`;
+  if (!bg) return textStyle;
+  return `${textStyle} background:hsla(${hue},70%,50%,0.14); border-color:hsla(${hue},70%,55%,0.45);`;
+}
+// Same idea, but for metrics where MORE is better (e.g. agents available):
+// green at/above `safe`, red at/below `danger` (danger < safe).
+function statusStyleInverse(count, danger, safe, { bg = true } = {}){
+  const GREEN = 130, RED = 0;
+  let hue;
+  if (count >= safe) hue = GREEN;
+  else if (count <= danger) hue = RED;
+  else {
+    const t = (safe - count) / (safe - danger);
+    hue = Math.round(GREEN - t * (GREEN - RED));
+  }
+  const textStyle = `color:hsl(${hue},80%,62%);`;
+  if (!bg) return textStyle;
+  return `${textStyle} background:hsla(${hue},70%,50%,0.14); border-color:hsla(${hue},70%,55%,0.45);`;
+}
+
+// TimeRemainingInMins is minutes remaining, formatted as "MIN:SS" (e.g. "1435:43" = 1435 minutes, 43 seconds).
+// The seconds remainder doesn't matter for hour-bucketing, so we only need the part before the colon.
+function parseTimeRemaining(str){
+  const m = /^(\d+):(\d{1,2})$/.exec((str || "").trim());
+  if (!m) return null;
+  return parseInt(m[1], 10);
+}
+
+function currentRemainingMinutes(row){
+  if (row.targetDate) {
+    const target = new Date(row.targetDate);
+    if (!isNaN(target.getTime())) {
+      return Math.max(0, Math.round((target.getTime() - Date.now()) / 60000));
+    }
+  }
+  return parseTimeRemaining(row.timeRemaining);
+}
+
+const P1_EXPIRING_THRESHOLD_MS = 60 * 60 * 1000;
+let p1ExpiringAlertActive = false;
+
+function isP1ExpiringWithinOneHour(row){
+  if (row.targetDate) {
+    const target = new Date(row.targetDate);
+    if (!isNaN(target.getTime())) {
+      const remainingMs = target.getTime() - Date.now();
+      return remainingMs > 0 && remainingMs < P1_EXPIRING_THRESHOLD_MS;
+    }
+  }
+
+  const remainingMinutes = parseTimeRemaining(row.timeRemaining);
+  return remainingMinutes !== null && remainingMinutes < 60;
+}
+
+function updateP1ExpiringAlert(rows){
+  const hasExpiringCase = rows.some(isP1ExpiringWithinOneHour);
+
+  // One sound per transition into the "at least one case under one hour"
+  // state, regardless of how many cases are expiring at the same time.
+  if (hasExpiringCase && !p1ExpiringAlertActive) {
+    playBling();
+  }
+  p1ExpiringAlertActive = hasExpiringCase;
+}
+
+function bucketIndexFor(mins){
+  for (let i = 0; i < CD_BUCKETS.length; i++) {
+    const b = CD_BUCKETS[i];
+    if (i === 0 ? mins <= b.hi : (mins > b.lo && mins <= b.hi)) return i;
+  }
+  return -1; // beyond 72h — not tracked on this grid
+}
+
+function buildCountdownData(rows){
+  const n = CD_BUCKETS.length;
+  const grid = {};        // tierKey -> [count per bucket]
+  const totals = new Array(n).fill(0);
+  const otherCounts = new Array(n).fill(0);
+  let otherSeen = false;
+  let parsedCount = 0;
+
+  CD_TIERS.forEach(t => grid[t.key] = new Array(n).fill(0));
+
+  rows.forEach(r => {
+    const mins = currentRemainingMinutes(r);
+    if (mins === null) return;
+    parsedCount++;
+
+    const idx = bucketIndexFor(mins);
+    if (idx === -1) return; // beyond the 72h window this grid covers
+
+    const tier = CD_TIERS.find(t => t.match.test(r.sla || ""));
+    totals[idx]++;
+    if (tier) grid[tier.key][idx]++;
+    else { otherCounts[idx]++; otherSeen = true; }
+  });
+
+  // Only show tier rows that actually have at least one case in the dataset
+  const activeTiers = CD_TIERS.filter(t => grid[t.key].some(v => v > 0));
+
+  return { activeTiers, grid, otherCounts, otherSeen, totals, parsedCount };
+}
+
+// Color the cell by combined priority: time urgency (primary, 70% weight) + package
+// tier priority (secondary, 30% weight). Both dimensions use the same red=high-priority,
+// blue=low-priority language, so a Diamond case reads hotter than a Standard case in the
+// same time bucket, and cells get cooler left-to-right as time-to-breach grows.
+function cdCellHTML(count, bucketIndex, bucketCount, tierIndex, tierCount, extraClass = ""){
+  if (count <= 0) {
+    return `<div class="cdCell${extraClass}"><span class="n">0</span></div>`;
+  }
+  const bucketHue = priorityHue(bucketIndex, bucketCount);
+  const hue = (tierIndex == null)
+    ? bucketHue
+    : Math.round(bucketHue * 0.7 + priorityHue(tierIndex, tierCount) * 0.3);
+  const style = `background:hsla(${hue},75%,50%,0.16); border-color:hsla(${hue},75%,55%,0.45);`;
+  const numStyle = `color:hsl(${hue},85%,72%);`;
+  return `<div class="cdCell hot${extraClass}" style="${style}"><span class="n" style="${numStyle}">${count}</span></div>`;
+}
+
+function renderCountdownGrid(rows){
+  const gridEl = document.getElementById("p1List");
+  const { activeTiers, grid, otherCounts, otherSeen, totals, parsedCount } = buildCountdownData(rows);
+  const bucketCount = CD_BUCKETS.length;
+
+  if (!parsedCount) {
+    gridEl.innerHTML = `<div class="p1Empty">No active Prio 1 cases right now.</div>`;
+    return;
+  }
+
+  let html = `<div class="countdownGrid">`;
+  html += `<div class="cdHeadCell tierHead">SLA tier</div>`;
+  CD_BUCKETS.forEach(b => html += `<div class="cdHeadCell">${escapeHTML(b.label)}</div>`);
+
+  const tierCount = CD_TIERS.length;
+  activeTiers.forEach(t => {
+    const tierIndex = CD_TIERS.indexOf(t);
+    html += `<div class="cdTierLabel" style="${tierTextStyle(tierIndex, tierCount)}">${escapeHTML(t.label)}</div>`;
+    grid[t.key].forEach((count, i) => html += cdCellHTML(count, i, bucketCount, tierIndex, tierCount));
+  });
+
+  if (otherSeen) {
+    html += `<div class="cdTierLabel">Other</div>`;
+    otherCounts.forEach((count, i) => html += cdCellHTML(count, i, bucketCount));
+  }
+
+  html += `<div class="cdTierLabel">Total</div>`;
+  totals.forEach((count, i) => {
+    const expiryClass = i === 0 && count > 0 ? " expiringAlert" : "";
+    html += cdCellHTML(count, i, bucketCount, null, null, expiryClass);
+  });
+  html += `</div>`;
+
+  gridEl.innerHTML = html;
+}
+
+function renderP1Error(){
+  const gridEl = document.getElementById("p1List");
+  const countEl = document.getElementById("p1Count");
+  countEl.textContent = "—";
+  gridEl.innerHTML = `<div class="p1Empty">Couldn't load live cases from the relay server.</div>`;
+}
+
+async function refreshP1(){
+  try{
+    const res = await fetch("/api/report/p1", { cache: "no-store" });
+    if (!res.ok) throw new Error("Relay HTTP " + res.status);
+    const data = await res.json();
+    const rows = data.rows || [];
+
+    updateP1ExpiringAlert(rows);
+
+    const countEl = document.getElementById("p1Count");
+    const updatedEl = document.getElementById("p1Updated");
+    countEl.textContent = rows.length + (rows.length === 1 ? " case" : " cases");
+    const updated = data.updatedAt ? new Date(data.updatedAt) : new Date();
+    updatedEl.textContent = "Updated " + updated.toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" });
+
+    renderCountdownGrid(rows);
+  } catch(e){
+    console.error("Report P1 error:", e);
+    renderP1Error();
+  }
+}
+
+/* ---------------------------
+   REPORT P2 — per-SLA-tier breakdown: count + oldest case (by target date)
+   Cases here are already past due, so "oldest" = earliest target date =
+   the one that's been overdue longest.
+----------------------------*/
+function aggregateP2ByTier(rows){
+  const tierData = {};
+  CD_TIERS.forEach(t => tierData[t.key] = { count: 0, oldest: null });
+  const otherData = { count: 0, oldest: null };
+  let total = 0;
+
+  rows.forEach(r => {
+    total++;
+    const tier = CD_TIERS.find(t => t.match.test(r.sla || ""));
+    const bucket = tier ? tierData[tier.key] : otherData;
+    bucket.count++;
+
+    const d = r.targetDate ? new Date(r.targetDate) : null;
+    if (d && !isNaN(d.getTime()) && (!bucket.oldest || d < bucket.oldest)) {
+      bucket.oldest = d;
+    }
+  });
+
+  return { tierData, otherData, total };
+}
+
+function formatShortDate(d){
+  if (!d) return "—";
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+}
+
+// Colors the oldest-case date by how overdue it is: green if recent,
+// scaling to red the longer it's been sitting — same green-to-red language
+// used elsewhere for "how much of a problem is this".
+function oldestDateStyle(d){
+  if (!d) return "";
+  const daysOverdue = (Date.now() - d.getTime()) / 86400000;
+  return statusStyle(daysOverdue, 3, 14, { bg: false }); // green <=3d, red >=14d
+}
+
+function renderP2TierCards(containerId, rows){
+  const el = document.getElementById(containerId);
+  const { tierData, otherData, total } = aggregateP2ByTier(rows);
+
+  if (!total) {
+    el.innerHTML = `<div class="p1Empty">No cases in this report right now.</div>`;
+    return;
+  }
+
+  let html = "";
+  const tierCount = CD_TIERS.length;
+  CD_TIERS.forEach((t, tierIndex) => {
+    const d = tierData[t.key];
+    if (d.count > 0) {
+      html += `<div class="tierCard">
+        <span class="tierCardName" style="${tierTextStyle(tierIndex, tierCount)}">${escapeHTML(t.label)}</span>
+        <span class="tierCardCount">${d.count}</span>
+        <span class="tierCardOldest"><span style="${oldestDateStyle(d.oldest)}">${formatShortDate(d.oldest)}</span></span>
+      </div>`;
+    }
+  });
+  if (otherData.count > 0) {
+    html += `<div class="tierCard">
+      <span class="tierCardName">Other</span>
+      <span class="tierCardCount">${otherData.count}</span>
+      <span class="tierCardOldest"><span style="${oldestDateStyle(otherData.oldest)}">${formatShortDate(otherData.oldest)}</span></span>
+    </div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+function updateTotalStat(numberElId, total, safe, danger){
+  const el = document.getElementById(numberElId);
+  el.textContent = total;
+  el.style = statusStyle(total, safe, danger, { bg: false });
+}
+
+// P2: tier cards (count + oldest date) + a dedicated Total stat.
+function makeP2Refresher(reportPath, updatedElId, chipsElId, totalElId, label, safe = 10, danger = 40){
+  return async function refresh(){
+    try{
+      const res = await fetch(reportPath, { cache: "no-store" });
+      if (!res.ok) throw new Error("Relay HTTP " + res.status);
+      const data = await res.json();
+      const rows = data.rows || [];
+
+      const updated = data.updatedAt ? new Date(data.updatedAt) : new Date();
+      document.getElementById(updatedElId).textContent = "Updated " + updated.toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" });
+
+      renderP2TierCards(chipsElId, rows);
+      updateTotalStat(totalElId, rows.length, safe, danger);
+    } catch(e){
+      console.error(`${label} error:`, e);
+      document.getElementById(chipsElId).innerHTML = `<div class="p1Empty">Couldn't load ${label} from the relay server.</div>`;
+      document.getElementById(totalElId).textContent = "—";
+    }
+  };
+}
+
+/* ---------------------------
+   REPORT P3 — deduplicated backlog: total, breakdown by Type, average age
+----------------------------*/
+function computeAverageAgeDays(rows){
+  const ages = rows.map(r => r.ageDays).filter(v => typeof v === "number" && !isNaN(v));
+  if (!ages.length) return null;
+  const avg = ages.reduce((s, v) => s + v, 0) / ages.length;
+  return Math.round(avg);
+}
+
+// Groups rows by Type, computes each group's count and average age, and
+// returns the top N by count — each with its OWN average age, not one
+// shared instance-wide number.
+function computeTopCategoriesWithAvgAge(rows, topN = 3){
+  const groups = {};
+  rows.forEach(r => {
+    const t = r.type || "Other";
+    (groups[t] = groups[t] || []).push(r);
+  });
+
+  const entries = Object.entries(groups).map(([type, groupRows]) => ({
+    type,
+    count: groupRows.length,
+    avgAge: computeAverageAgeDays(groupRows)
+  }));
+
+  entries.sort((a, b) => b.count - a.count);
+  return entries.slice(0, topN);
+}
+
+// Top 3 categories by count, each showing its own count AND average age —
+// no overall/instance-wide metric (removed per request).
+function renderP3TopStats(containerId, rows){
+  const el = document.getElementById(containerId);
+  if (!rows.length) {
+    el.innerHTML = `<div class="p1Empty">No cases in this report right now.</div>`;
+    return;
+  }
+
+  const top3 = computeTopCategoriesWithAvgAge(rows, 3);
+
+  el.innerHTML = top3.map(({ type, count, avgAge }) => `
+    <div class="tierCard">
+      <span class="tierCardName">${escapeHTML(type)}</span>
+      <span class="tierCardCount">${count}</span>
+      <span class="tierCardOldest">${avgAge != null ? avgAge + "d avg" : "—"}</span>
+    </div>
+  `).join("");
+}
+
+function makeP3Refresher(reportPath, updatedElId, statsElId, totalElId, label){
+  return async function refresh(){
+    try{
+      const res = await fetch(reportPath, { cache: "no-store" });
+      if (!res.ok) throw new Error("Relay HTTP " + res.status);
+      const data = await res.json();
+      const rows = data.rows || [];
+
+      const updated = data.updatedAt ? new Date(data.updatedAt) : new Date();
+      document.getElementById(updatedElId).textContent = "Updated " + updated.toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" });
+
+      renderP3TopStats(statsElId, rows);
+      document.getElementById(totalElId).textContent = rows.length;
+    } catch(e){
+      console.error(`${label} error:`, e);
+      document.getElementById(statsElId).innerHTML = `<div class="p1Empty">Couldn't load ${label} from the relay server.</div>`;
+      document.getElementById(totalElId).textContent = "—";
+    }
+  };
+}
+
+const refreshP2 = makeP2Refresher("/api/report/p2", "p2Updated", "p2Chips", "p2Total", "Report P2");
+const refreshP3 = makeP3Refresher("/api/report/p3", "p3Updated", "p3Stats", "p3Total", "Report P3");
+
+/* ---------------------------
+   AWS CONNECT — LIVE QUEUE METRICS (totals only)
+   This is live call-center state (agents, calls waiting), not a periodic
+   report, so it refreshes much more often than the SLA reports above.
+----------------------------*/
+const CONNECT_REFRESH_MS = 30 * 1000; // refresh every 30 seconds
+const LONG_WAIT_THRESHOLD_SECONDS = 7 * 60; // alert past this
+
+function formatWaitTime(seconds){
+  const s = Math.max(0, Math.round(Number(seconds) || 0));
+  const m = Math.floor(s / 60);
+  const rem = s % 60;
+  return `${m}:${String(rem).padStart(2, "0")}`;
+}
+
+// Short two-tone "bling" using Web Audio — no external asset needed.
+// Note: browsers block audio until the page has had some user interaction
+// (a click anywhere on the page) — that's a browser policy, not a bug here;
+// on a kiosk display, one initial tap/click unlocks it for the session.
+let audioCtx = null;
+function playBling(){
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = audioCtx.currentTime;
+    // Descending two-note chime (like a doorbell) — calmer than an ascending
+    // alert tone. Triangle wave + low-pass filter for warmth (avoids the
+    // harsher, more alarm-like edge of a plain sine/square beep). Louder
+    // peak gain than before so it actually cuts through room noise, but a
+    // longer soft attack/decay keeps it from feeling urgent or jarring.
+    [[880, 0, 0.30], [660, 0.18, 0.38]].forEach(([freq, delay, dur]) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = 2200;
+      osc.type = "triangle";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, now + delay);
+      gain.gain.exponentialRampToValueAtTime(0.38, now + delay + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + dur);
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + dur + 0.05);
+    });
+  } catch(e){
+    console.error("playBling failed:", e);
+  }
+}
+
+// Tracks which queues were already in the "long waiting" alert on the
+// previous refresh, so we only play a sound for genuinely NEW entries —
+// not on every refresh while a queue is still waiting.
+let alertedQueueNames = new Set();
+
+// Rotation state for the alert cell, kept independent of the 30s data
+// refresh so the rotation itself can run on its own faster cadence.
+const OLDEST_ALERT_ROTATE_MS = 4000;
+let currentLongWaiting = [];
+let oldestRotationIndex = 0;
+let oldestRotationTimer = null;
+
+// Shows one offending queue at a time in place of the normal "oldest wait"
+// number — the other three stats stay visible and untouched. Rotates
+// through every queue over the threshold if there's more than one.
+function renderOldestCellAlert(cellEl){
+  if (!currentLongWaiting.length) return;
+  const idx = oldestRotationIndex % currentLongWaiting.length;
+  const q = currentLongWaiting[idx];
+  const mins = Math.floor(q.oldestAgeSeconds / 60);
+  const position = currentLongWaiting.length > 1
+    ? ` <span style="font-size:10px;opacity:0.8;">(${idx + 1}/${currentLongWaiting.length})</span>`
+    : "";
+
+  cellEl.innerHTML = `
+    <div class="statNumber">${mins}m</div>
+    <div class="qName">${escapeHTML(q.queueName)}${position}</div>
+  `;
+}
+
+function startOldestRotation(cellEl){
+  if (oldestRotationTimer) return; // already running, don't restart/reset timing
+  oldestRotationTimer = setInterval(() => {
+    oldestRotationIndex++;
+    renderOldestCellAlert(cellEl);
+  }, OLDEST_ALERT_ROTATE_MS);
+}
+
+function stopOldestRotation(){
+  if (oldestRotationTimer) {
+    clearInterval(oldestRotationTimer);
+    oldestRotationTimer = null;
+  }
+  oldestRotationIndex = 0;
+  currentLongWaiting = [];
+}
+
+async function refreshConnect(){
+  try{
+    const res = await fetch("/api/connect/status", { cache: "no-store" });
+    if (!res.ok) throw new Error("Relay HTTP " + res.status);
+    const data = await res.json();
+    const totals = data.totals || {};
+    const queues = data.queues || [];
+
+    const totalOldest = Number(totals.oldestAgeSeconds) || 0;
+
+    // Longest-waiting queues first — most urgent at the top of the list.
+    let longWaiting = queues
+      .filter(q => Number(q.oldestAgeSeconds) > LONG_WAIT_THRESHOLD_SECONDS)
+      .sort((a, b) => Number(b.oldestAgeSeconds) - Number(a.oldestAgeSeconds));
+
+    // Safety net: the instance-wide total and the per-queue list come from
+    // two separate AWS Connect API calls — if they ever disagree (stale
+    // per-queue data, timing skew, etc.) and the total alone says we're
+    // over the threshold, don't let the alert silently fail to fire just
+    // because no individual queue matched. Attribute it to whichever queue
+    // reported the highest wait, even if that's under the per-queue filter.
+    if (!longWaiting.length && totalOldest > LONG_WAIT_THRESHOLD_SECONDS) {
+      console.warn(
+        `AWS Connect: totals.oldestAgeSeconds (${totalOldest}s) exceeds the ` +
+        `${LONG_WAIT_THRESHOLD_SECONDS}s alert threshold but no per-queue entry ` +
+        `matched it — check /api/connect/status for a data mismatch.`,
+        { totals, queues }
+      );
+
+      let fallbackQueue = null;
+      queues.forEach(q => {
+        const v = Number(q.oldestAgeSeconds) || 0;
+        if (!fallbackQueue || v > (Number(fallbackQueue.oldestAgeSeconds) || 0)) fallbackQueue = q;
+      });
+
+      longWaiting = [{
+        queueName: fallbackQueue ? fallbackQueue.queueName : "Unknown queue",
+        oldestAgeSeconds: totalOldest
+      }];
+    }
+
+    const titleEl = document.getElementById("connectTitle");
+    const oldestCellEl = document.getElementById("connOldestCell");
+
+    // The first three stats are always shown normally, regardless of alert state.
+    const available = Number(totals.agentsAvailable) || 0;
+    const onContact = Number(totals.agentsOnContact) || 0;
+    const inQueue = Number(totals.inQueue) || 0;
+
+    const availEl = document.getElementById("connAvailable");
+    availEl.textContent = available;
+    availEl.style = statusStyleInverse(available, 0, 5, { bg: false }); // red at 0, green at 5+
+
+    document.getElementById("connOnContact").textContent = onContact; // neutral, just informational
+
+    const inQueueEl = document.getElementById("connInQueue");
+    inQueueEl.textContent = inQueue;
+    inQueueEl.style = statusStyle(inQueue, 0, 10, { bg: false }); // green at 0, red at 10+
+
+    if (longWaiting.length > 0) {
+      // Sound only for queues that just newly crossed the threshold.
+      const currentNames = new Set(longWaiting.map(q => q.queueName));
+      const newlyAdded = [...currentNames].filter(name => !alertedQueueNames.has(name));
+      newlyAdded.forEach((_, i) => setTimeout(playBling, i * 200));
+      alertedQueueNames = currentNames;
+
+      titleEl.textContent = "Long Wait Alert - AWS Connect · Phone Calls";
+      oldestCellEl.classList.add("alertingCell");
+
+      currentLongWaiting = longWaiting; // refreshed every 30s; rotation timer below runs independently
+      renderOldestCellAlert(oldestCellEl);
+      startOldestRotation(oldestCellEl); // no-op if already running, so rotation timing doesn't reset
+    } else {
+      alertedQueueNames = new Set();
+      titleEl.textContent = "Live Queues - AWS Connect · Phone Calls";
+      oldestCellEl.classList.remove("alertingCell");
+      stopOldestRotation();
+
+      const oldest = Number(totals.oldestAgeSeconds) || 0;
+      oldestCellEl.innerHTML = `
+        <div class="statNumber" id="connOldest">${formatWaitTime(oldest)}</div>
+        <div class="statLabel" id="connOldestLabel">oldest wait</div>
+      `;
+      document.getElementById("connOldest").style = statusStyle(oldest, 60, 300, { bg: false }); // green <=1min, red >=5min
+    }
+
+    const updated = data.generatedAt ? new Date(data.generatedAt) : new Date();
+    document.getElementById("connectUpdated").textContent = "Updated " + updated.toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit", second:"2-digit" });
+  } catch(e){
+    console.error("AWS Connect metrics error:", e);
+    ["connAvailable","connOnContact","connInQueue"].forEach(id => {
+      document.getElementById(id).textContent = "—";
+    });
+    stopOldestRotation();
+    const oldestCellEl = document.getElementById("connOldestCell");
+    oldestCellEl.classList.remove("alertingCell");
+    oldestCellEl.innerHTML = `
+      <div class="statNumber" id="connOldest">—</div>
+      <div class="statLabel" id="connOldestLabel">oldest wait</div>
+    `;
+  }
+}
+refreshConnect();
+setInterval(refreshConnect, CONNECT_REFRESH_MS);
+
+/* ---------------------------
+   DASHBOARD SYNCHRONIZATION — SSE + polling fallback
+----------------------------*/
+let reportRefreshInFlight = null;
+let dashboardEventSource = null;
+let lastDashboardRevision = 0;
+
+function refreshAllReports(){
+  if (reportRefreshInFlight) return reportRefreshInFlight;
+
+  reportRefreshInFlight = Promise.allSettled([
+    refreshP1(),
+    refreshP2(),
+    refreshP3()
+  ]).finally(() => {
+    reportRefreshInFlight = null;
+  });
+
+  return reportRefreshInFlight;
+}
+
+function connectDashboardEvents(){
+  if (!("EventSource" in window)) return;
+
+  if (dashboardEventSource) return;
+  dashboardEventSource = new EventSource("/api/dashboard/events");
+  const source = dashboardEventSource;
+
+  source.addEventListener("dashboard-state", event => {
+    try {
+      const state = JSON.parse(event.data);
+      lastDashboardRevision = Number(state.revision) || 0;
+    } catch (e) {
+      console.warn("Dashboard SSE state could not be parsed:", e);
+    }
+    refreshAllReports();
+  });
+
+  source.addEventListener("snapshot-updated", event => {
+    try {
+      const update = JSON.parse(event.data);
+      const revision = Number(update.revision) || 0;
+      if (revision <= lastDashboardRevision) return;
+      lastDashboardRevision = revision;
+
+      if (update.key === "connect:status") {
+        refreshConnect();
+      } else if (typeof update.key === "string" && update.key.startsWith("report:")) {
+        refreshAllReports();
+      }
+    } catch (e) {
+      console.warn("Dashboard SSE update could not be parsed:", e);
+    }
+  });
+
+  // EventSource automatically reconnects. The normal report and Connect
+  // timers remain active as a safety net if SSE is temporarily unavailable.
+  source.onerror = () => {};
+}
+
+refreshAllReports();
+setInterval(refreshAllReports, REPORT_REFRESH_MS);
+connectDashboardEvents();
+
+/* ---------------------------
+   NOTE: no full-page reload here on purpose. Every widget (phrases, day/night,
+   P1/P2/P3 reports) already refreshes itself in place on its own interval —
+   reloading the page would just make everything flash blank and repopulate,
+   which is the opposite of what a wallboard should do.
+----------------------------*/
+</script>
+</body>
+</html>

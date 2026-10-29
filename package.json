@@ -1,0 +1,16 @@
+{
+  "name": "dashboard-relay-server",
+  "version": "1.0.0",
+  "description": "Small backend relay: fetches Report P1 (and future reports) from the Service Dashboard API server-side, so credentials never live in the browser and the contact center monitor doesn't need direct network access to the API host.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}
