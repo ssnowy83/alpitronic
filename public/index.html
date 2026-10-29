@@ -472,6 +472,26 @@ html,body{
   margin-top:2px;
 }
 
+/* Keep all P2 and P3 SLA-tier cards on one readable line. */
+.p2Panel .tierChips,
+.p3Panel .tierChips{
+  flex-wrap:nowrap;
+  gap:6px;
+}
+.p2Panel .tierCard,
+.p3Panel .tierCard{
+  flex:1 1 0;
+  min-width:0;
+  padding:6px 8px;
+}
+.p2Panel .tierCardName,
+.p3Panel .tierCardName{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  font-size:11px;
+}
+
 .p1Panel{
   margin-top:14px;
   padding-top:12px;
